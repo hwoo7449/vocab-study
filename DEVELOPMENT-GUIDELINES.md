@@ -14,22 +14,22 @@
    - src/app 디렉토리 확인 (layout.tsx, page.tsx 포함)
    - 전역 스타일 설정 (src/app/globals.css)
 
-4. 사용자 인증 시스템 구현
+4. 사용자 인증 시스템 구현 (부분 완료)
    - 회원가입 페이지 생성 (src/app/signup/page.tsx)
    - 로그인 페이지 생성 (src/app/login/page.tsx)
    - JWT 토큰 관리 유틸리티 함수 작성 (src/utils/auth.ts)
    - API 라우트 생성 (src/app/api/auth/[...nextauth]/route.ts)
 
-5. Vercel Postgres 설정
-   - Vercel 프로젝트 설정 및 Postgres 데이터베이스 생성
-   - 환경 변수 설정 (.env.local 파일 생성)
-   - 데이터베이스 연결 설정 (src/lib/db.ts)
+5. Vercel Postgres 설정 (완료)
+   - 로컬 PostgreSQL 데이터베이스 설정
+   - 환경 변수 설정 (.env 파일 생성)
+   - 데이터베이스 연결 설정 (prisma/schema.prisma)
 
-6. 데이터베이스 스키마 구현
-   - "시스템 설계 및 데이터베이스 구조.md" 파일의 데이터베이스 구조에 따라 테이블 생성
-   - 마이그레이션 스크립트 작성
+6. 데이터베이스 스키마 구현 (완료)
+   - Prisma 스키마 정의
+   - 초기 마이그레이션 실행
 
-7. API 엔드포인트 구현
+7. API 엔드포인트 구현 (진행 중)
    - "시스템 설계 및 데이터베이스 구조.md" 파일의 API 엔드포인트 목록에 따라 구현
    - API 라우트 파일 생성 및 로직 구현 (src/app/api/ 디렉토리 내)
 

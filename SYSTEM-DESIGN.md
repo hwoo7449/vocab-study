@@ -12,40 +12,64 @@
 6. 선택한 상태를 데이터베이스에 저장
 7. 다음 단어로 넘어감
 
-## 2. 데이터베이스 구조
-### 사용자 테이블 (users)
-- id: 고유 식별자
-- username: 사용자 이름
-- email: 이메일 주소
-- password_hash: 암호화된 비밀번호
-- created_at: 계정 생성 시간
-- updated_at: 계정 정보 수정 시간
+## 2. 데이터베이스 구조 (Prisma 스키마로 업데이트)
+```prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-### 단어 테이블 (words)
-- id: 고유 식별자
-- day: 학습 일차
-- english: 영어 단어
-- korean: 한국어 뜻
+generator client {
+  provider = "prisma-client-js"
+}
 
-### 사용자 학습 진행 테이블 (user_progress)
-- id: 고유 식별자
-- user_id: 사용자 ID (외래 키)
-- word_id: 단어 ID (외래 키)
-- status: 현재 학습 상태 (완벽, 애매함, 모름)
-- mastered_count: '완벽' 상태를 선택한 횟수
-- unsure_count: '애매함' 상태를 선택한 횟수
-- unknown_count: '모름' 상태를 선택한 횟수
-- updated_at: 상태 업데이트 시간
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-### 사용자 통계 테이블 (user_statistics)
-- id: 고유 식별자
-- user_id: 사용자 ID (외래 키)
-- day: 학습 일차
-- total_words_studied: 총 학습한 단어 수
-- total_study_sessions: 총 학습 세션 수
-- last_study_date: 마지막 학습 날짜
-- streak: 연속 학습 일수
-- updated_at: 통계 업데이트 시간
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  UserProgress  UserProgress[]
+  UserStatistics UserStatistics[]
+}
+
+model Word {
+  id            String    @id @default(cuid())
+  day           Int
+  english       String
+  korean        String
+  UserProgress  UserProgress[]
+}
+
+model UserProgress {
+  id            String    @id @default(cuid())
+  userId        String
+  wordId        String
+  status        String    // "완벽", "애매함", "모름" 중 하나
+  masteredCount Int       @default(0)
+  unsureCount   Int       @default(0)
+  unknownCount  Int       @default(0)
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id])
+  word          Word      @relation(fields: [wordId], references: [id])
+}
+
+model UserStatistics {
+  id                  String    @id @default(cuid())
+  userId              String
+  day                 Int
+  totalWordsStudied   Int
+  totalStudySessions  Int
+  lastStudyDate       DateTime
+  streak              Int
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id])
+}
+```
 
 ## 3. API 엔드포인트
 - POST /api/auth/signup: 회원가입
@@ -54,11 +78,11 @@
 - POST /api/progress: 사용자의 단어 학습 상태 업데이트
 - GET /api/statistics/{userId}: 사용자의 학습 통계 조회
 
-## 4. 주요 기능 구현
-- 사용자 인증 및 권한 관리
-- 단어 카드 표시 및 상호작용
-- 학습 진행 상황 실시간 업데이트
-- 개인별 학습 통계 생성 및 표시
+## 4. 주요 기능 구현 (진행 중)
+- 사용자 인증 및 권한 관리 (NextAuth.js 사용)
+- 단어 카드 표시 및 상호작용 (예정)
+- 학습 진행 상황 실시간 업데이트 (예정)
+- 개인별 학습 통계 생성 및 표시 (예정)
 
 ## 5. 확장 가능성
 - 다양한 단어장 지원 (EBS 외 다른 단어장 추가)
