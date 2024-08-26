@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
     const { data: session, status } = useSession();
@@ -27,13 +28,17 @@ export default function DashboardPage() {
                     <div className="max-w-md mx-auto">
                         <h1 className="text-2xl font-semibold">Welcome to your Dashboard</h1>
                         <p className="mt-4">Hello, {session?.user?.name || 'User'}!</p>
+                        <Link href="/study">
+                            <div className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-center cursor-pointer">
+                                Start Studying
+                            </div>
+                        </Link>
                         <button
                             onClick={() => signOut({ callbackUrl: '/' })}
                             className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                         >
                             Log out
                         </button>
-                        {/* 여기에 대시보드 내용을 추가하세요 */}
                     </div>
                 </div>
             </div>
