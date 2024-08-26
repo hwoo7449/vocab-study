@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function DashboardPage() {
     const { data: session, status } = useSession();
@@ -16,8 +17,8 @@ export default function DashboardPage() {
         }
     }, [status, router]);
 
-    if (status === 'loading') {
-        return <div>Loading...</div>;
+    if (status === "loading") {
+        return <LoadingSpinner />;
     }
 
     return (

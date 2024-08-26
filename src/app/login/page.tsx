@@ -1,14 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function LoginPage() {
+    const { data: session, status } = useSession();
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
+
+    useEffect(() => {
+        if (session) {
+            router.push('/dashboard');
+        }
+    }, [session, router]);
+
+    if (status === "loading") {
+        return <LoadingSpinner />;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,7 +36,7 @@ export default function LoginPage() {
             if (result?.error) {
                 setError('Invalid email or password');
             } else {
-                router.push('/dashboard'); // 로그인 성공 후 리다이렉트할 페이지
+                router.push('/dashboard');
             }
         } catch (error) {
             setError('An unexpected error occurred');

@@ -7,34 +7,52 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Wordbook {
+  id             String         @id @default(cuid())
+  name           String
+  totalDays      Int
+  description    String?
+  words          Word[]
+  userProgresses UserProgress[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Word {
+  id             String         @id @default(cuid())
+  wordbookId     String
+  day            Int
+  english        String
+  korean         String
+  wordbook       Wordbook       @relation(fields: [wordbookId], references: [id])
+  userProgresses UserProgress[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([wordbookId, day])
+}
+
 model UserProgress {
-  id        String   @id @default(cuid())
-  userId    String
-  wordId    String
-  status    String
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  word      Word     @relation(fields: [wordId], references: [id])
+  id         String   @id @default(cuid())
+  userId     String
+  wordId     String
+  wordbookId String
+  status     String
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+  word       Word     @relation(fields: [wordId], references: [id])
+  wordbook   Wordbook @relation(fields: [wordbookId], references: [id])
 
   @@unique([userId, wordId])
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String         @unique
-  password      String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  UserProgress  UserProgress[]
-}
-
-model Word {
-  id           String         @id @default(cuid())
-  english      String
-  korean       String
-  day          Int
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  UserProgress UserProgress[]
+  id             String         @id @default(cuid())
+  name           String?
+  email          String         @unique
+  password       String
+  role           String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  userProgresses UserProgress[]
 }

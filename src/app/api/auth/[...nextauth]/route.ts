@@ -1,10 +1,15 @@
-import NextAuth, { AuthOptions } from "next-auth";
+import NextAuth, { AuthOptions, User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
+
+// NextAuth의 User 타입을 확장
+interface User extends NextAuthUser {
+    role?: string;
+}
 
 export const authOptions: AuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -15,7 +20,7 @@ export const authOptions: AuthOptions = {
                 email: { label: "Email", type: "text" },
                 password: { label: "Password", type: "password" }
             },
-            async authorize(credentials) {
+            async authorize(credentials): Promise<User | null> {
                 if (!credentials?.email || !credentials?.password) {
                     return null;
                 }
@@ -38,6 +43,7 @@ export const authOptions: AuthOptions = {
                     id: user.id,
                     email: user.email,
                     name: user.name,
+                    role: user.role || undefined,
                 };
             }
         })
@@ -49,12 +55,14 @@ export const authOptions: AuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                token.role = user.role;
             }
             return token;
         },
         async session({ session, token }) {
             if (session?.user) {
                 session.user.id = token.id as string;
+                session.user.role = token.role as string;
             }
             return session;
         },
