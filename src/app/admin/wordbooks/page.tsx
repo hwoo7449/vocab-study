@@ -81,6 +81,12 @@ export default function WordbooksPage() {
                             >
                                 Edit
                             </button>
+                            <Link
+                                href={`/admin/wordbooks/${wordbook.id}/words`}
+                                className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
+                            >
+                                Manage Words
+                            </Link>
                             <button
                                 onClick={() => deleteWordbook(wordbook.id)}
                                 className="bg-red-500 text-white px-2 py-1 rounded"

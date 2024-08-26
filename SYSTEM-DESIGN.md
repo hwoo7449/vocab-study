@@ -12,77 +12,159 @@
 6. 선택한 상태를 데이터베이스에 저장
 7. 다음 단어로 넘어감
 
-## 2. 데이터베이스 구조 (Prisma 스키마로 업데이트)
-```prisma
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+### 데이터베이스 모델:
+1. User: 사용자 정보 관리
+2. Wordbook: 단어장 정보 관리
+3. Word: 개별 단어 정보 관리
+4. UserProgress: 사용자의 단어 학습 진행 상황 관리
 
-generator client {
-  provider = "prisma-client-js"
-}
+### 주요 API 엔드포인트:
+- /api/auth/[...nextauth]: 인증 관련 엔드포인트
+- /api/wordbooks: 단어장 CRUD 작업
+- /api/wordbooks/[id]/words: 특정 단어장의 단어 CRUD 작업
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+### 주요 페이지:
+- /login: 로그인 페이지
+- /admin/wordbooks: 단어장 관리 페이지
+- /admin/wordbooks/[id]/words: 단어 관리 페이지
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  UserProgress  UserProgress[]
-  UserStatistics UserStatistics[]
-}
-
-model Word {
-  id            String    @id @default(cuid())
-  day           Int
-  english       String
-  korean        String
-  UserProgress  UserProgress[]
-}
-
-model UserProgress {
-  id            String    @id @default(cuid())
-  userId        String
-  wordId        String
-  status        String    // "완벽", "애매함", "모름" 중 하나
-  masteredCount Int       @default(0)
-  unsureCount   Int       @default(0)
-  unknownCount  Int       @default(0)
-  updatedAt     DateTime  @updatedAt
-  user          User      @relation(fields: [userId], references: [id])
-  word          Word      @relation(fields: [wordId], references: [id])
-}
-
-model UserStatistics {
-  id                  String    @id @default(cuid())
-  userId              String
-  day                 Int
-  totalWordsStudied   Int
-  totalStudySessions  Int
-  lastStudyDate       DateTime
-  streak              Int
-  updatedAt           DateTime  @updatedAt
-  user                User      @relation(fields: [userId], references: [id])
-}
+## 폴더 구조
 ```
-
-## 3. API 엔드포인트
-- POST /api/auth/signup: 회원가입
-- POST /api/auth/login: 로그인
-- GET /api/words/{day}: 특정 Day의 단어 목록 조회
-- POST /api/progress: 사용자의 단어 학습 상태 업데이트
-- GET /api/statistics/{userId}: 사용자의 학습 통계 조회
-
-## 4. 주요 기능 구현 (진행 중)
-- 사용자 인증 및 권한 관리 (NextAuth.js 사용)
-- 단어 카드 표시 및 상호작용 (예정)
-- 학습 진행 상황 실시간 업데이트 (예정)
-- 개인별 학습 통계 생성 및 표시 (예정)
+vocab-study
+│  .env
+│  .eslintrc.json
+│  .gitignore
+│  DEVELOPMENT-GUIDELINES.md
+│  LICENSE
+│  next-env.d.ts
+│  next.config.mjs
+│  package-lock.json
+│  package.json
+│  postcss.config.mjs
+│  PROJECT-STATUS.md
+│  README.md
+│  SYSTEM-DESIGN.md
+│  tailwind.config.ts
+│  tree.txt
+│  tsconfig.json
+│  
+│                  
+├─prisma
+│  │  schema.prisma
+│  │  
+│  └─migrations
+│      │  migration_lock.toml
+│      │  
+│      ├─20240825151707_init
+│      │      migration.sql
+│      │      
+│      ├─20240826055718_add_word_model
+│      │      migration.sql
+│      │      
+│      ├─20240826061947_add_user_progress
+│      │      migration.sql
+│      │      
+│      ├─20240826072149_add_wordbook_model
+│      │      migration.sql
+│      │      
+│      └─20240826072820_add_user_role
+│              migration.sql
+│              
+├─public
+│      next.svg
+│      vercel.svg
+│      
+├─scripts
+│  └─data_processing
+│          ebs_wordmaster_extractor.py
+│          
+└─src
+    │  middleware.ts
+    │  
+    ├─app
+    │  │  favicon.ico
+    │  │  globals.css
+    │  │  layout.tsx
+    │  │  page.tsx
+    │  │  
+    │  ├─admin
+    │  │  │  layout.tsx
+    │  │  │  
+    │  │  └─wordbooks
+    │  │      │  page.tsx
+    │  │      │  
+    │  │      └─[id]
+    │  │          │  page.tsx
+    │  │          │  
+    │  │          └─words
+    │  │                  page.tsx
+    │  │                  
+    │  ├─api
+    │  │  ├─auth
+    │  │  │  ├─signup
+    │  │  │  │      route.ts
+    │  │  │  │      
+    │  │  │  └─[...nextauth]
+    │  │  │          route.ts
+    │  │  │          
+    │  │  ├─progress
+    │  │  │      route.ts
+    │  │  │      
+    │  │  ├─wordbooks
+    │  │  │  │  route.ts
+    │  │  │  │  
+    │  │  │  └─[id]
+    │  │  │      │  route.ts
+    │  │  │      │  
+    │  │  │      └─words
+    │  │  │          │  route.ts
+    │  │  │          │  
+    │  │  │          └─[wordId]
+    │  │  │                  route.ts
+    │  │  │                  
+    │  │  └─words
+    │  │      └─[day]
+    │  │              route.ts
+    │  │              
+    │  ├─dashboard
+    │  │      page.tsx
+    │  │      
+    │  ├─login
+    │  │      page.tsx
+    │  │      
+    │  ├─signup
+    │  │      page.tsx
+    │  │      
+    │  └─study
+    │      │  page.tsx
+    │      │  
+    │      └─[day]
+    │              page.tsx
+    │              
+    ├─components
+    │      AddWordForm.tsx
+    │      AuthProvider.tsx
+    │      EditWordForm.tsx
+    │      LoadingSpinner.tsx
+    │      WordCard.tsx
+    │      
+    ├─lib
+    │      prisma.ts
+    │      
+    ├─middleware
+    │      authMiddleware.ts
+    │      
+    ├─schemas
+    │      wordbook.ts
+    │      
+    ├─styles
+    ├─types
+    │      next-auth.d.ts
+    │      
+    └─utils
+            auth.ts
+            safeLog.ts
+```
 
 ## 5. 확장 가능성
 - 다양한 단어장 지원 (EBS 외 다른 단어장 추가)
