@@ -27,3 +27,31 @@ export async function PUT(
         return NextResponse.json({ error: 'Failed to update word' }, { status: 500 });
     }
 }
+
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: { id: string; wordId: string } }
+) {
+    const authResult = await authMiddleware(req as any);
+    if (authResult instanceof NextResponse) return authResult;
+
+    try {
+        // 트랜잭션을 사용하여 관련된 UserProgress 레코드와 Word를 함께 삭제합니다.
+        await prisma.$transaction(async (prisma) => {
+            // 먼저 관련된 UserProgress 레코드를 삭제합니다.
+            await prisma.userProgress.deleteMany({
+                where: { wordId: params.wordId },
+            });
+
+            // 그 다음 Word를 삭제합니다.
+            await prisma.word.delete({
+                where: { id: params.wordId },
+            });
+        });
+
+        return NextResponse.json({ message: 'Word and related progress deleted successfully' });
+    } catch (error) {
+        console.error('Failed to delete word:', error);
+        return NextResponse.json({ error: 'Failed to delete word' }, { status: 500 });
+    }
+}

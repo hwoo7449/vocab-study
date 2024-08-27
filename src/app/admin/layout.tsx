@@ -1,3 +1,5 @@
+// src/app/admin/layout.tsx
+
 'use client';
 
 import Link from 'next/link';
@@ -35,8 +37,10 @@ export default function AdminLayout({
                     {/* 추가 관리자 메뉴 항목들 */}
                 </nav>
             </aside>
-            <main className="flex-1 p-10">
-                {children}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+                <div className="container mx-auto px-6 py-8">
+                    {children}
+                </div>
             </main>
         </div>
     );

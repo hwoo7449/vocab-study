@@ -13,7 +13,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <div className="content-wrapper">
+            {children}
+          </div>
           <ToastContainer />
         </AuthProvider>
       </body>

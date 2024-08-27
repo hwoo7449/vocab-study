@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -43,4 +43,22 @@ body {
   border-top-color: #3498db;
   -webkit-animation: spin 1s linear infinite;
   animation: spin 1s linear infinite;
+}
+
+/* 페이지 전체 높이 설정 */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 컨텐츠 영역 스크롤 가능하도록 설정 */
+.content-wrapper {
+  flex: 1;
+  overflow-y: auto;
 }
