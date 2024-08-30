@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { authMiddleware } from '@/middleware/authMiddleware';
 
+function calculateNextReview(status: string, reviewCount: number, easeFactor: number, interval: number): { nextReviewDate: Date, newEaseFactor: number, newInterval: number } {
+    const now = new Date();
+    let newEaseFactor = easeFactor;
+    let newInterval = interval;
+
+    switch (status) {
+        case 'known':
+            newEaseFactor = Math.max(1.3, easeFactor + 0.1);
+            newInterval = Math.round(interval * newEaseFactor);
+            break;
+        case 'unsure':
+            newEaseFactor = Math.max(1.3, easeFactor - 0.15);
+            newInterval = Math.max(1, Math.round(interval * 0.5));
+            break;
+        case 'unknown':
+            newEaseFactor = Math.max(1.3, easeFactor - 0.2);
+            newInterval = 1;
+            break;
+    }
+
+    const nextReviewDate = new Date(now.getTime() + newInterval * 24 * 60 * 60 * 1000);
+    return { nextReviewDate, newEaseFactor, newInterval };
+}
+
 export async function POST(req: NextRequest) {
     const authResult = await authMiddleware(req as any);
     if (authResult instanceof NextResponse) return authResult;
@@ -11,27 +35,18 @@ export async function POST(req: NextRequest) {
     const userId = authResult.sub;
 
     try {
-        const { wordId, status } = await req.json();
+        const { wordId, wordbookId, status } = await req.json();
 
-        const word = await prisma.word.findUnique({ where: { id: wordId } });
-        if (!word) {
-            return NextResponse.json({ error: 'Word not found' }, { status: 404 });
-        }
+        const existingProgress = await prisma.userProgress.findUnique({
+            where: { userId_wordId: { userId, wordId } },
+        });
 
-        const now = new Date();
-        let nextReviewDate = new Date(now);
-
-        switch (status) {
-            case 'unknown':
-                nextReviewDate.setDate(now.getDate() + 1);
-                break;
-            case 'unsure':
-                nextReviewDate.setDate(now.getDate() + 3);
-                break;
-            case 'known':
-                nextReviewDate.setDate(now.getDate() + 7);
-                break;
-        }
+        const { nextReviewDate, newEaseFactor, newInterval } = calculateNextReview(
+            status,
+            existingProgress ? existingProgress.reviewCount : 0,
+            existingProgress ? existingProgress.easeFactor : 2.5,
+            existingProgress ? existingProgress.interval : 1
+        );
 
         const progress = await prisma.userProgress.upsert({
             where: {
@@ -42,18 +57,22 @@ export async function POST(req: NextRequest) {
             },
             update: {
                 status,
-                lastReviewDate: now,
+                lastReviewDate: new Date(),
                 nextReviewDate,
                 reviewCount: { increment: 1 },
+                easeFactor: newEaseFactor,
+                interval: newInterval,
             },
             create: {
                 userId,
                 wordId,
-                wordbookId: word.wordbookId,
+                wordbookId,
                 status,
-                lastReviewDate: now,
+                lastReviewDate: new Date(),
                 nextReviewDate,
                 reviewCount: 1,
+                easeFactor: newEaseFactor,
+                interval: newInterval,
             },
         });
 

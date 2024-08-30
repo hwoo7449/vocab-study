@@ -9,6 +9,9 @@ interface Word {
     id: string;
     english: string;
     korean: string;
+    userProgress?: {
+        status: string;
+    };
 }
 
 export default function StudyPage() {
@@ -46,13 +49,19 @@ export default function StudyPage() {
                 },
                 body: JSON.stringify({
                     wordId: words[currentWordIndex].id,
-                    status: status,
+                    wordbookId,
+                    status,
                 }),
             });
 
             if (!response.ok) {
                 throw new Error('Failed to save progress');
             }
+
+            // Update local state
+            const updatedWords = [...words];
+            updatedWords[currentWordIndex].userProgress = { status };
+            setWords(updatedWords);
 
             // Move to the next word
             if (currentWordIndex < words.length - 1) {

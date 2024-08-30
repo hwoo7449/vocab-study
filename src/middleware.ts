@@ -16,8 +16,8 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // 대시보드 및 학습 페이지 보호
-    if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/study')) {
+    // 대시보드 및 학습 및 리뷰 페이지 보호
+    if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/study') || request.nextUrl.pathname.startsWith('/review')) {
         if (!token) {
             safeLog("Access denied to protected page"); // 디버깅용
             return NextResponse.redirect(new URL('/login', request.url))
@@ -34,5 +34,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/study/:path*']
+    matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/study/:path*', '/review/:path*']
 }
