@@ -1,42 +1,65 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authMiddleware } from '@/middleware/authMiddleware';
 
-export async function POST(request: Request) {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+export async function POST(req: NextRequest) {
+    const authResult = await authMiddleware(req as any);
+    if (authResult instanceof NextResponse) return authResult;
+    if (!authResult || !authResult.sub) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { wordId, status } = await request.json();
-
-    if (!wordId || !status) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+    const userId = authResult.sub;
 
     try {
-        const userProgress = await prisma.userProgress.upsert({
+        const { wordId, status } = await req.json();
+
+        const word = await prisma.word.findUnique({ where: { id: wordId } });
+        if (!word) {
+            return NextResponse.json({ error: 'Word not found' }, { status: 404 });
+        }
+
+        const now = new Date();
+        let nextReviewDate = new Date(now);
+
+        switch (status) {
+            case 'unknown':
+                nextReviewDate.setDate(now.getDate() + 1);
+                break;
+            case 'unsure':
+                nextReviewDate.setDate(now.getDate() + 3);
+                break;
+            case 'known':
+                nextReviewDate.setDate(now.getDate() + 7);
+                break;
+        }
+
+        const progress = await prisma.userProgress.upsert({
             where: {
                 userId_wordId: {
-                    userId: session.user.id,
-                    wordId: wordId,
+                    userId,
+                    wordId,
                 },
             },
             update: {
-                status: status,
+                status,
+                lastReviewDate: now,
+                nextReviewDate,
+                reviewCount: { increment: 1 },
             },
             create: {
-                userId: session.user.id,
-                wordId: wordId,
-                status: status,
+                userId,
+                wordId,
+                wordbookId: word.wordbookId,
+                status,
+                lastReviewDate: now,
+                nextReviewDate,
+                reviewCount: 1,
             },
         });
 
-        return NextResponse.json(userProgress);
+        return NextResponse.json(progress);
     } catch (error) {
-        console.error('Error saving progress:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error('Failed to update progress:', error);
+        return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 });
     }
 }

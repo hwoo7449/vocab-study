@@ -1,12 +1,38 @@
 'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
-export default function DaySelectionPage() {
-    const [selectedDay, setSelectedDay] = useState<number | null>(null);
+interface Wordbook {
+    id: string;
+    name: string;
+    totalDays: number;
+    description: string | null;
+}
 
-    const days = Array.from({ length: 30 }, (_, i) => i + 1);
+export default function StudyPage() {
+    const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchWordbooks = async () => {
+            try {
+                const response = await fetch('/api/wordbooks');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch wordbooks');
+                }
+                const data = await response.json();
+                setWordbooks(data.wordbooks);
+                setIsLoading(false);
+            } catch (error) {
+                console.error('Error fetching wordbooks:', error);
+                setIsLoading(false);
+            }
+        };
+        fetchWordbooks();
+    }, []);
+
+    if (isLoading) return <LoadingSpinner />;
 
     return (
         <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
@@ -14,28 +40,20 @@ export default function DaySelectionPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
                 <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
                     <div className="max-w-md mx-auto">
-                        <h1 className="text-2xl font-semibold mb-6">Select a Day to Study</h1>
-                        <div className="grid grid-cols-5 gap-4">
-                            {days.map((day) => (
-                                <button
-                                    key={day}
-                                    onClick={() => setSelectedDay(day)}
-                                    className={`p-2 rounded ${selectedDay === day
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-200 hover:bg-gray-300'
-                                        }`}
-                                >
-                                    {day}
-                                </button>
+                        <h1 className="text-2xl font-semibold mb-6">Select a Wordbook to Study</h1>
+                        <div className="space-y-4">
+                            {wordbooks.map((wordbook) => (
+                                <Link key={wordbook.id} href={`/study/${wordbook.id}`}>
+                                    <div className="p-4 bg-gray-200 rounded-lg hover:bg-gray-300 cursor-pointer">
+                                        <h2 className="text-lg font-semibold">{wordbook.name}</h2>
+                                        <p>Total days: {wordbook.totalDays}</p>
+                                        <p className="mt-1 text-sm text-gray-600">
+                                            {wordbook.description}
+                                        </p>
+                                    </div>
+                                </Link>
                             ))}
                         </div>
-                        {selectedDay && (
-                            <Link href={`/study/${selectedDay}`}>
-                                <div className="mt-6 bg-green-500 text-white p-2 rounded text-center cursor-pointer hover:bg-green-600">
-                                    Start Studying Day {selectedDay}
-                                </div>
-                            </Link>
-                        )}
                     </div>
                 </div>
             </div>

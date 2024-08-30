@@ -10,48 +10,35 @@ export async function GET(
 ) {
     const authResult = await authMiddleware(req as any);
     if (authResult instanceof NextResponse) return authResult;
+    if (!authResult || !authResult.sub) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = authResult.sub;
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const search = searchParams.get('search') || '';
-    const sort = searchParams.get('sort') || 'day';
-    const order = searchParams.get('order') || 'asc';
-    const skip = (page - 1) * limit;
-
-    const orderBy: { [key: string]: 'asc' | 'desc' } = {};
-    orderBy[sort as string] = order as 'asc' | 'desc';
+    const dayParam = searchParams.get('day');
+    const day = dayParam ? parseInt(dayParam) : undefined;
 
     try {
-        const [words, totalCount] = await Promise.all([
-            prisma.word.findMany({
-                where: {
-                    wordbookId: params.id,
-                    OR: [
-                        { english: { contains: search, mode: 'insensitive' } },
-                        { korean: { contains: search, mode: 'insensitive' } },
-                    ],
+        const words = await prisma.word.findMany({
+            where: {
+                wordbookId: params.id,
+                ...(day !== undefined ? { day } : {}),
+            },
+            include: {
+                userProgresses: {
+                    where: { userId },
                 },
-                skip,
-                take: limit,
-                orderBy,
-            }),
-            prisma.word.count({
-                where: {
-                    wordbookId: params.id,
-                    OR: [
-                        { english: { contains: search, mode: 'insensitive' } },
-                        { korean: { contains: search, mode: 'insensitive' } },
-                    ],
-                },
-            }),
-        ]);
-
-        return NextResponse.json({
-            words,
-            totalPages: Math.ceil(totalCount / limit),
-            currentPage: page,
+            },
+            orderBy: { id: 'asc' },
         });
+
+        const wordsWithProgress = words.map(word => ({
+            ...word,
+            userProgress: word.userProgresses[0] || null,
+        }));
+
+        return NextResponse.json(wordsWithProgress);
     } catch (error) {
         console.error('Failed to fetch words:', error);
         return NextResponse.json({ error: 'Failed to fetch words' }, { status: 500 });

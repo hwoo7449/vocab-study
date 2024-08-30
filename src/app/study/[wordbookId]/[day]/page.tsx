@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import WordCard from '@/components/WordCard';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface Word {
     id: string;
@@ -15,7 +16,7 @@ export default function StudyPage() {
     const day = params.day;
     const [words, setWords] = useState<Word[]>([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchWords = async () => {
@@ -26,10 +27,10 @@ export default function StudyPage() {
                 }
                 const data = await response.json();
                 setWords(data);
-                setLoading(false);
+                setIsLoading(false);
             } catch (error) {
                 console.error('Error fetching words:', error);
-                setLoading(false);
+                setIsLoading(false);
             }
         };
 
@@ -67,9 +68,7 @@ export default function StudyPage() {
         }
     };
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    if (isLoading) return <LoadingSpinner />;
 
     if (words.length === 0) {
         return <div>No words found for this day.</div>;
