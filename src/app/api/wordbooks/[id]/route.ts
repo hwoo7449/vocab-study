@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { authMiddleware } from '@/middleware/authMiddleware';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
     try {
@@ -34,12 +35,33 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    const authResult = await authMiddleware(req as any);
+    if (authResult instanceof NextResponse) return authResult;
+
     try {
-        await prisma.wordbook.delete({
-            where: { id: params.id },
+        // 트랜잭션을 사용하여 관련된 모든 데이터를 삭제
+        await prisma.$transaction(async (prisma) => {
+            // 1. 해당 Wordbook의 모든 Word에 연결된 UserProgress 삭제
+            await prisma.userProgress.deleteMany({
+                where: { wordbookId: params.id }
+            });
+
+            // 2. 해당 Wordbook의 모든 Word 삭제
+            await prisma.word.deleteMany({
+                where: { wordbookId: params.id }
+            });
+
+            // 3. Wordbook 삭제
+            await prisma.wordbook.delete({
+                where: { id: params.id }
+            });
         });
-        return NextResponse.json({ message: 'Wordbook deleted successfully' });
+
+        return NextResponse.json({ message: 'Wordbook and related data deleted successfully' });
     } catch (error) {
         console.error('Failed to delete wordbook:', error);
         return NextResponse.json({ error: 'Failed to delete wordbook' }, { status: 500 });

@@ -13,7 +13,7 @@ interface Word {
 
 export default function StudyPage() {
     const params = useParams();
-    const day = params.day;
+    const { wordbookId, day } = params;
     const [words, setWords] = useState<Word[]>([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function StudyPage() {
     useEffect(() => {
         const fetchWords = async () => {
             try {
-                const response = await fetch(`/api/words/${day}`);
+                const response = await fetch(`/api/wordbooks/${wordbookId}/words?day=${day}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch words');
                 }
@@ -35,11 +35,9 @@ export default function StudyPage() {
         };
 
         fetchWords();
-    }, [day]);
+    }, [wordbookId, day]);
 
     const handleStatusChange = async (status: 'unknown' | 'unsure' | 'known') => {
-        console.log(`Word ${words[currentWordIndex].english} status: ${status}`);
-
         try {
             const response = await fetch('/api/progress', {
                 method: 'POST',
@@ -78,7 +76,7 @@ export default function StudyPage() {
         <div className="min-h-screen bg-gray-100 py-6 flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold mb-8">Studying Day {day}</h1>
             <WordCard
-                key={words[currentWordIndex].id} // Add this line
+                key={words[currentWordIndex].id}
                 word={words[currentWordIndex].english}
                 meaning={words[currentWordIndex].korean}
                 onStatusChange={handleStatusChange}
