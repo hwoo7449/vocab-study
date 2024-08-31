@@ -1,5 +1,3 @@
-// src/utils/spaceRepetition.ts
-
 export type WordStatus = 'unknown' | 'unsure' | 'known';
 
 export interface ReviewSchedule {
@@ -11,7 +9,8 @@ export interface ReviewSchedule {
 export function calculateNextReview(
     currentInterval: number,
     easeFactor: number,
-    status: WordStatus
+    status: WordStatus,
+    consecutiveCorrect: number
 ): ReviewSchedule {
     let newInterval: number;
     let newEaseFactor: number = easeFactor;
@@ -22,12 +21,16 @@ export function calculateNextReview(
             newEaseFactor = Math.max(1.3, easeFactor - 0.2);
             break;
         case 'unsure':
-            newInterval = Math.max(1, Math.floor(currentInterval * 1.5));
+            newInterval = Math.max(1, Math.floor(currentInterval * 1.2));
             newEaseFactor = Math.max(1.3, easeFactor - 0.15);
             break;
         case 'known':
-            newInterval = Math.floor(currentInterval * easeFactor);
-            newEaseFactor = easeFactor + 0.1;
+            if (consecutiveCorrect > 1) {
+                newInterval = Math.floor(currentInterval * easeFactor);
+                newEaseFactor = easeFactor + 0.1;
+            } else {
+                newInterval = Math.floor(currentInterval * 1.5);
+            }
             break;
     }
 

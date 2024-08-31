@@ -18,10 +18,18 @@ export async function POST(req: NextRequest) {
             where: { userId_wordId: { userId, wordId } },
         });
 
+        let consecutiveCorrect = existingProgress ? existingProgress.consecutiveCorrect : 0;
+        if (status === 'known') {
+            consecutiveCorrect += 1;
+        } else {
+            consecutiveCorrect = 0;
+        }
+
         const { nextReviewDate, interval, easeFactor } = calculateNextReview(
             existingProgress ? existingProgress.interval : 1,
             existingProgress ? existingProgress.easeFactor : 2.5,
-            status as WordStatus
+            status as WordStatus,
+            consecutiveCorrect
         );
 
         const progress = await prisma.userProgress.upsert({
@@ -38,6 +46,7 @@ export async function POST(req: NextRequest) {
                 reviewCount: { increment: 1 },
                 easeFactor,
                 interval,
+                consecutiveCorrect,
             },
             create: {
                 userId,
@@ -49,15 +58,13 @@ export async function POST(req: NextRequest) {
                 reviewCount: 1,
                 easeFactor,
                 interval,
+                consecutiveCorrect,
             },
         });
 
         return NextResponse.json(progress);
     } catch (error) {
         console.error('Failed to update progress:', error);
-        if (error instanceof Error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-        return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 });
     }
 }
