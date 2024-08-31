@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
             include: {
                 word: true,
                 wordbook: {
-                    select: { name: true }
+                    select: { name: true, id: true }
                 }
             },
             orderBy: {
@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
             english: progress.word.english,
             korean: progress.word.korean,
             wordbookName: progress.wordbook.name,
+            wordbookId: progress.wordbook.id,
             userProgress: {
                 status: progress.status,
             },

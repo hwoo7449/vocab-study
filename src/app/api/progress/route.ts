@@ -55,6 +55,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(progress);
     } catch (error) {
         console.error('Failed to update progress:', error);
-        return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 });
+        if (error instanceof Error) {
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 });
     }
 }
