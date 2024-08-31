@@ -17,31 +17,60 @@ interface Word {
     };
 }
 
+interface Wordbook {
+    id: string;
+    name: string;
+}
+
 export default function ReviewPage() {
     const [words, setWords] = useState<Word[]>([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [wordStatuses, setWordStatuses] = useState<{ [key: string]: WordStatus }>({});
+    const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
+    const [selectedWordbook, setSelectedWordbook] = useState<string>('');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
     const router = useRouter();
 
     useEffect(() => {
+        fetchWordbooks();
         fetchReviewWords();
     }, []);
+
+    const fetchWordbooks = async () => {
+        try {
+            const response = await fetch('/api/wordbooks');
+            if (!response.ok) {
+                throw new Error('Failed to fetch wordbooks');
+            }
+            const data = await response.json();
+            setWordbooks(data.wordbooks);
+        } catch (error) {
+            console.error('Error fetching wordbooks:', error);
+        }
+    };
 
     const fetchReviewWords = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch('/api/review');
+            let url = '/api/review?';
+            if (selectedWordbook) url += `wordbookId=${selectedWordbook}&`;
+            if (startDate) url += `startDate=${startDate}&`;
+            if (endDate) url += `endDate=${endDate}&`;
+
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch review words');
             }
             const data = await response.json();
             if (data.length === 0) {
-                setError('No words to review at this time.');
+                setError('No words to review based on current filters.');
             } else {
                 setWords(data);
+                setCurrentWordIndex(0);
             }
         } catch (error) {
             console.error('Error fetching review words:', error);
@@ -49,6 +78,11 @@ export default function ReviewPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleFilter = (e: React.FormEvent) => {
+        e.preventDefault();
+        fetchReviewWords();
     };
 
     const handleStatusChange = async (status: WordStatus) => {
@@ -114,35 +148,68 @@ export default function ReviewPage() {
         );
     }
 
-    if (words.length === 0) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-                <h1 className="text-2xl font-bold mb-4">No words to review at this time.</h1>
-                <button
-                    onClick={() => router.push('/dashboard')}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                    Back to Dashboard
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-gray-100 py-6 flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold mb-8">Review Session</h1>
-            <WordCard
-                key={words[currentWordIndex].id}
-                word={words[currentWordIndex].english}
-                meaning={words[currentWordIndex].korean}
-                onStatusChange={handleStatusChange}
-            />
-            <p className="mt-4">
-                Word {currentWordIndex + 1} of {words.length} | Wordbook: {words[currentWordIndex].wordbookName}
-            </p>
-            <div className="mt-4 w-full max-w-md bg-white rounded-full h-2.5 dark:bg-gray-700">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${((currentWordIndex + 1) / words.length) * 100}%` }}></div>
-            </div>
+
+            <form onSubmit={handleFilter} className="mb-8 space-y-4">
+                <div>
+                    <label htmlFor="wordbook" className="block mb-2">Wordbook:</label>
+                    <select
+                        id="wordbook"
+                        value={selectedWordbook}
+                        onChange={(e) => setSelectedWordbook(e.target.value)}
+                        className="w-full p-2 border rounded"
+                    >
+                        <option value="">All Wordbooks</option>
+                        {wordbooks.map((wb) => (
+                            <option key={wb.id} value={wb.id}>{wb.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="startDate" className="block mb-2">Start Date:</label>
+                    <input
+                        type="date"
+                        id="startDate"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full p-2 border rounded"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="endDate" className="block mb-2">End Date:</label>
+                    <input
+                        type="date"
+                        id="endDate"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full p-2 border rounded"
+                    />
+                </div>
+                <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Apply Filters
+                </button>
+            </form>
+
+            {words.length > 0 ? (
+                <>
+                    <WordCard
+                        key={words[currentWordIndex].id}
+                        word={words[currentWordIndex].english}
+                        meaning={words[currentWordIndex].korean}
+                        onStatusChange={handleStatusChange}
+                    />
+                    <p className="mt-4">
+                        Word {currentWordIndex + 1} of {words.length} | Wordbook: {words[currentWordIndex].wordbookName}
+                    </p>
+                    <div className="mt-4 w-full max-w-md bg-white rounded-full h-2.5 dark:bg-gray-700">
+                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${((currentWordIndex + 1) / words.length) * 100}%` }}></div>
+                    </div>
+                </>
+            ) : (
+                <p>No words to review based on current filters.</p>
+            )}
         </div>
     );
 }
