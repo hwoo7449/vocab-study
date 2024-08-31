@@ -7,38 +7,38 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-interface ProgressStats {
-    totalWords: number;
-    knownWords: number;
-    learningWords: number;
-    unknownWords: number;
+interface DashboardData {
+    totalProgress: { status: string; _count: number }[];
+    recentWords: { word: { english: string; korean: string } }[];
+    reviewDueCount: number;
+    dailyStats: number;
 }
 
 export default function DashboardPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const [stats, setStats] = useState<ProgressStats | null>(null);
+    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.push('/login');
         } else if (status === 'authenticated') {
-            fetchStats();
+            fetchDashboardData();
         }
     }, [status, router]);
 
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
         try {
-            const response = await fetch('/api/progress/stats');
+            const response = await fetch('/api/dashboard');
             if (!response.ok) {
-                throw new Error('Failed to fetch stats');
+                throw new Error('Failed to fetch dashboard data');
             }
             const data = await response.json();
-            setStats(data);
+            setDashboardData(data);
             setIsLoading(false);
         } catch (error) {
-            console.error('Error fetching stats:', error);
+            console.error('Error fetching dashboard data:', error);
             setIsLoading(false);
         }
     };
@@ -56,15 +56,27 @@ export default function DashboardPage() {
                         <h1 className="text-2xl font-semibold">Welcome to your Dashboard</h1>
                         <p className="mt-4">Hello, {session?.user?.name || 'User'}!</p>
 
-                        {stats && (
-                            <div className="mt-6">
-                                <h2 className="text-xl font-semibold">Your Learning Progress</h2>
-                                <p>Total Words: {stats.totalWords}</p>
-                                <p>Known Words: {stats.knownWords}</p>
-                                <p>Learning Words: {stats.learningWords}</p>
-                                <p>Unknown Words: {stats.unknownWords}</p>
-                                <p>Progress: {((stats.knownWords / stats.totalWords) * 100).toFixed(2)}%</p>
-                            </div>
+                        {dashboardData && (
+                            <>
+                                <div className="mt-6">
+                                    <h2 className="text-xl font-semibold">Your Learning Progress</h2>
+                                    {dashboardData.totalProgress.map(progress => (
+                                        <p key={progress.status}>{progress.status}: {progress._count}</p>
+                                    ))}
+                                </div>
+                                <div className="mt-6">
+                                    <h2 className="text-xl font-semibold">Recent Words</h2>
+                                    <ul>
+                                        {dashboardData.recentWords.map((item, index) => (
+                                            <li key={index}>{item.word.english} - {item.word.korean}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="mt-6">
+                                    <p>Words due for review: {dashboardData.reviewDueCount}</p>
+                                    <p>Words studied today: {dashboardData.dailyStats}</p>
+                                </div>
+                            </>
                         )}
 
                         <Link href="/study">

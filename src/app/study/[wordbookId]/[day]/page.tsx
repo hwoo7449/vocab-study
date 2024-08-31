@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import WordCard from '@/components/WordCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { WordStatus } from '@/utils/spaceRepetition';
 
 interface Word {
     id: string;
@@ -16,10 +17,12 @@ interface Word {
 
 export default function StudyPage() {
     const params = useParams();
+    const router = useRouter();
     const { wordbookId, day } = params;
     const [words, setWords] = useState<Word[]>([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [studiedWords, setStudiedWords] = useState(0);
 
     useEffect(() => {
         const fetchWords = async () => {
@@ -40,7 +43,7 @@ export default function StudyPage() {
         fetchWords();
     }, [wordbookId, day]);
 
-    const handleStatusChange = async (status: 'unknown' | 'unsure' | 'known') => {
+    const handleStatusChange = async (status: WordStatus) => {
         try {
             const response = await fetch('/api/progress', {
                 method: 'POST',
@@ -62,16 +65,25 @@ export default function StudyPage() {
             const updatedWords = [...words];
             updatedWords[currentWordIndex].userProgress = { status };
             setWords(updatedWords);
+            setStudiedWords(prev => prev + 1);
 
             // Move to the next word
             if (currentWordIndex < words.length - 1) {
                 setCurrentWordIndex(currentWordIndex + 1);
             } else {
-                alert("You have completed this day's words!");
+                router.push(`/study/${wordbookId}/${day}/summary?total=${words.length}`);
             }
         } catch (error) {
             console.error('Error saving progress:', error);
             alert('Failed to save progress. Please try again.');
+        }
+    };
+
+    const handleStopStudying = () => {
+        if (studiedWords > 0) {
+            router.push(`/study/${wordbookId}/${day}/summary?total=${words.length}`);
+        } else {
+            alert("You need to study at least one word before stopping.");
         }
     };
 
@@ -93,6 +105,12 @@ export default function StudyPage() {
             <p className="mt-4">
                 Word {currentWordIndex + 1} of {words.length}
             </p>
+            <button
+                onClick={handleStopStudying}
+                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+                Stop Studying
+            </button>
         </div>
     );
 }

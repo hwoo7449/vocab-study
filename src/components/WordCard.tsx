@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { WordStatus } from '@/utils/spaceRepetition';
 
 interface WordCardProps {
     word: string;
     meaning: string;
-    onStatusChange: (status: 'unknown' | 'unsure' | 'known') => void;
+    onStatusChange: (status: WordStatus) => void;
 }
 
 const WordCard: React.FC<WordCardProps> = ({ word, meaning, onStatusChange }) => {
     const [showMeaning, setShowMeaning] = useState(false);
-    const [status, setStatus] = useState<'unknown' | 'unsure' | 'known' | null>(null);
+    const [status, setStatus] = useState<WordStatus | null>(null);
 
     useEffect(() => {
         // Reset state when word changes
@@ -16,7 +17,7 @@ const WordCard: React.FC<WordCardProps> = ({ word, meaning, onStatusChange }) =>
         setStatus(null);
     }, [word]);
 
-    const handleStatusChange = (newStatus: 'unknown' | 'unsure' | 'known') => {
+    const handleStatusChange = (newStatus: WordStatus) => {
         setStatus(newStatus);
         onStatusChange(newStatus);
     };
@@ -37,22 +38,19 @@ const WordCard: React.FC<WordCardProps> = ({ word, meaning, onStatusChange }) =>
             {showMeaning && <p className="text-lg mb-4">{meaning}</p>}
             <div className="flex justify-between mt-4">
                 <button
-                    className={`px-4 py-2 rounded ${status === 'unknown' ? 'bg-red-500 text-white' : 'bg-gray-200'
-                        }`}
+                    className={`px-4 py-2 rounded ${status === 'unknown' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleStatusChange('unknown')}
                 >
                     Don't Know
                 </button>
                 <button
-                    className={`px-4 py-2 rounded ${status === 'unsure' ? 'bg-yellow-500 text-white' : 'bg-gray-200'
-                        }`}
+                    className={`px-4 py-2 rounded ${status === 'unsure' ? 'bg-yellow-500 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleStatusChange('unsure')}
                 >
                     Unsure
                 </button>
                 <button
-                    className={`px-4 py-2 rounded ${status === 'known' ? 'bg-green-500 text-white' : 'bg-gray-200'
-                        }`}
+                    className={`px-4 py-2 rounded ${status === 'known' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleStatusChange('known')}
                 >
                     Know
