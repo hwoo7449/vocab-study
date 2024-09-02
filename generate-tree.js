@@ -28,4 +28,4 @@ const rootDir = process.cwd();
 const tree = generateTree(rootDir);
 
 fs.writeFileSync('FOLDER_STRUCTURE.md', tree);
-console.log('Folder structure has been saved to folder_structure.txt');
+console.log('Folder structure has been saved to FOLDER_STRUCTURE.md');
