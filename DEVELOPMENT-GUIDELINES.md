@@ -1,6 +1,5 @@
-# 개발 단계 요약 (App Router 사용을 반영한 수정)
+# 개발 단계 요약 (App Router 사용을 반영한 수정) (큰 흐름)
 
-## 완료된 단계
 1. 프로젝트 초기 설정
    - GitHub에 새 저장소 생성 (vocab-study)
    - Next.js 프로젝트 생성: `npx create-next-app@latest vocab-study --typescript`
@@ -42,7 +41,6 @@
    - 단어 추가/수정/삭제 기능 구현
    - 단어 검색 및 정렬 기능 구현
 
-## 진행 예정 단계
 10. 사용자 학습 진행 상황 추적 기능 구현
     - UserProgress 모델을 활용한 학습 상태 관리
     - 학습 진행 상황 표시 UI 구현
