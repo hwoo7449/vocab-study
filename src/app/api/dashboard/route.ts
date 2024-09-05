@@ -12,10 +12,23 @@ export async function GET(req: NextRequest) {
 
     try {
         // 전체 학습 진행 상황
-        const totalProgress = await prisma.userProgress.groupBy({
-            by: ['status'],
-            where: { userId },
-            _count: true,
+        const totalWords = await prisma.word.count();
+        const learnedWords = await prisma.userProgress.count({
+            where: { userId, status: 'known' },
+        });
+        const totalProgress = Math.round((learnedWords / totalWords) * 100);
+
+        // 일일 목표 (임시로 20단어로 설정)
+        const dailyGoal = 20;
+
+        // 오늘의 학습 단어 수
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dailyAchievement = await prisma.userProgress.count({
+            where: {
+                userId,
+                updatedAt: { gte: today },
+            },
         });
 
         // 최근 학습한 단어
@@ -34,21 +47,36 @@ export async function GET(req: NextRequest) {
             },
         });
 
-        // 일일 학습 통계
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dailyStats = await prisma.userProgress.count({
-            where: {
-                userId,
-                updatedAt: { gte: today },
-            },
+        // 어려운 단어들 (status가 'unknown'인 단어들)
+        const difficultWords = await prisma.userProgress.findMany({
+            where: { userId, status: 'unknown' },
+            take: 5,
+            include: { word: true },
         });
+
+        // 다음 학습 추천
+        const nextDay = await prisma.userProgress.findFirst({
+            where: { userId },
+            orderBy: { word: { day: 'asc' } },
+            select: { word: { select: { day: true } } },
+        });
+        const nextLearningRecommendation = nextDay
+            ? `You're ready to learn Day ${nextDay.word.day} words!`
+            : "Start learning new words today!";
 
         return NextResponse.json({
             totalProgress,
-            recentWords,
+            dailyGoal,
+            dailyAchievement,
+            recentWords: recentWords.map(progress => ({
+                word: { english: progress.word.english, korean: progress.word.korean }
+            })),
             reviewDueCount,
-            dailyStats,
+            difficultWords: difficultWords.map(progress => ({
+                english: progress.word.english,
+                korean: progress.word.korean
+            })),
+            nextLearningRecommendation,
         });
     } catch (error) {
         console.error('Dashboard data fetch error:', error);

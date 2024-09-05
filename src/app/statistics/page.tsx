@@ -11,7 +11,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 interface Statistics {
     totalWordsLearned: number;
     wordsByStatus: { status: string; _count: number }[];
-    dailyProgress: { lastReviewDate: string; _count: number }[];
+    progressData: { label: string; count: number }[];
     wordbookProgress: {
         id: string;
         name: string;
@@ -20,22 +20,26 @@ interface Statistics {
     }[];
 }
 
+type ProgressType = 'daily' | 'monthly';
+
 export default function StatisticsPage() {
     const [statistics, setStatistics] = useState<Statistics | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [progressType, setProgressType] = useState<ProgressType>('daily');
     const router = useRouter();
 
     useEffect(() => {
         fetchStatistics();
-    }, []);
+    }, [progressType]);
 
     const fetchStatistics = async () => {
         try {
-            const response = await fetch('/api/statistics');
+            const response = await fetch(`/api/statistics?type=${progressType}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch statistics');
             }
             const data = await response.json();
+            console.log('Received statistics data:', JSON.stringify(data, null, 2));
             setStatistics(data);
         } catch (error) {
             console.error('Error fetching statistics:', error);
@@ -50,18 +54,19 @@ export default function StatisticsPage() {
         return <div>Failed to load statistics.</div>;
     }
 
-    // 최근 7일 데이터만 필터링
-    const last7Days = statistics.dailyProgress
-        .sort((a, b) => new Date(b.lastReviewDate).getTime() - new Date(a.lastReviewDate).getTime())
-        .slice(0, 7)
-        .reverse();
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+    };
 
-    const dailyProgressData = {
-        labels: last7Days.map(item => new Date(item.lastReviewDate).toLocaleDateString()),
+    const progressData = {
+        labels: statistics.progressData.map(item =>
+            progressType === 'daily' ? formatDate(item.label) : item.label
+        ),
         datasets: [
             {
                 label: 'Words Learned',
-                data: last7Days.map(item => item._count),
+                data: statistics.progressData.map(item => item.count),
                 backgroundColor: 'rgba(75, 192, 192, 0.6)',
             },
         ],
@@ -93,6 +98,13 @@ export default function StatisticsPage() {
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4">Learning Statistics</h1>
+            {/* Back to Dashboard 버튼 추가 */}
+            <button
+                onClick={() => router.push('/dashboard')}
+                className="mb-3 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+                Back to Dashboard
+            </button>
 
             <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-2">Total Words Learned</h2>
@@ -107,8 +119,18 @@ export default function StatisticsPage() {
             </div>
 
             <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Daily Progress (Last 7 Days)</h2>
-                <Bar data={dailyProgressData} options={barOptions} />
+                <h2 className="text-xl font-semibold mb-2">Learning Progress</h2>
+                <div className="mb-2">
+                    <select
+                        value={progressType}
+                        onChange={(e) => setProgressType(e.target.value as ProgressType)}
+                        className="border rounded p-2"
+                    >
+                        <option value="daily">Daily</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <Bar data={progressData} options={barOptions} />
             </div>
 
             <div className="mb-6">
@@ -121,6 +143,13 @@ export default function StatisticsPage() {
                     ))}
                 </ul>
             </div>
+            {/* Back to Dashboard 버튼 추가 */}
+            <button
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+                Back to Dashboard
+            </button>
         </div>
     );
 }

@@ -8,10 +8,13 @@ import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface DashboardData {
-    totalProgress: { status: string; _count: number }[];
+    totalProgress: number;
+    dailyGoal: number;
+    dailyAchievement: number;
     recentWords: { word: { english: string; korean: string } }[];
     reviewDueCount: number;
-    dailyStats: number;
+    difficultWords?: { english: string; korean: string }[];
+    nextLearningRecommendation?: string;
 }
 
 export default function DashboardPage() {
@@ -36,9 +39,9 @@ export default function DashboardPage() {
             }
             const data = await response.json();
             setDashboardData(data);
-            setIsLoading(false);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+        } finally {
             setIsLoading(false);
         }
     };
@@ -60,9 +63,9 @@ export default function DashboardPage() {
                             <>
                                 <div className="mt-6">
                                     <h2 className="text-xl font-semibold">Your Learning Progress</h2>
-                                    {dashboardData.totalProgress.map(progress => (
-                                        <p key={progress.status}>{progress.status}: {progress._count}</p>
-                                    ))}
+                                    <p>Total Progress: {dashboardData.totalProgress}%</p>
+                                    <p>Daily Goal: {dashboardData.dailyGoal} words</p>
+                                    <p>Today's Achievement: {dashboardData.dailyAchievement} words</p>
                                 </div>
                                 <div className="mt-6">
                                     <h2 className="text-xl font-semibold">Recent Words</h2>
@@ -74,9 +77,22 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="mt-6">
                                     <p>Words due for review: {dashboardData.reviewDueCount}</p>
-                                    <p>Words studied today: {dashboardData.dailyStats}</p>
+                                    {dashboardData.difficultWords && dashboardData.difficultWords.length > 0 && (
+                                        <p>Difficult Words: {dashboardData.difficultWords.map(word => word.english).join(', ')}</p>
+                                    )}
+                                    {dashboardData.nextLearningRecommendation && (
+                                        <p>{dashboardData.nextLearningRecommendation}</p>
+                                    )}
                                 </div>
                             </>
+                        )}
+
+                        {session?.user?.role === 'admin' && (
+                            <Link href="/admin/users">
+                                <div className="mt-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-center cursor-pointer">
+                                    Manage Users
+                                </div>
+                            </Link>
                         )}
 
                         <Link href="/study">
@@ -87,6 +103,11 @@ export default function DashboardPage() {
                         <Link href="/review">
                             <div className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-center cursor-pointer">
                                 Start Review
+                            </div>
+                        </Link>
+                        <Link href="/statistics">
+                            <div className="mt-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-center cursor-pointer">
+                                View Statistics
                             </div>
                         </Link>
                         <button
