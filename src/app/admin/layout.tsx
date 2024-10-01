@@ -26,7 +26,7 @@ export default function AdminLayout({
 
     return (
         <div className="flex h-screen bg-gray-100">
-            <aside className="w-64 bg-white shadow-md">
+            <aside className="w-64 bg-white shadow-md flex flex-col">
                 <nav className="mt-5">
                     <Link href="/admin/wordbooks" className="block py-2 px-4 text-gray-600 hover:bg-gray-200">
                         Wordbooks
@@ -36,6 +36,11 @@ export default function AdminLayout({
                     </Link>
                     {/* 추가 관리자 메뉴 항목들 */}
                 </nav>
+                <div className="mt-auto mb-4">
+                    <Link href="/dashboard" className="block py-2 px-4 text-gray-600 hover:bg-gray-200">
+                        Back to Dashboard
+                    </Link>
+                </div>
             </aside>
             <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
                 <div className="container mx-auto px-6 py-8">

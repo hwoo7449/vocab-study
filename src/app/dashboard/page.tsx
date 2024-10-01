@@ -22,6 +22,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showAdminButtons, setShowAdminButtons] = useState(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -87,14 +88,6 @@ export default function DashboardPage() {
                             </>
                         )}
 
-                        {session?.user?.role === 'admin' && (
-                            <Link href="/admin/users">
-                                <div className="mt-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-center cursor-pointer">
-                                    Manage Users
-                                </div>
-                            </Link>
-                        )}
-
                         <Link href="/study">
                             <div className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-center cursor-pointer">
                                 Start Studying
@@ -110,6 +103,32 @@ export default function DashboardPage() {
                                 View Statistics
                             </div>
                         </Link>
+
+                        {session?.user?.role === 'admin' && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => setShowAdminButtons(!showAdminButtons)}
+                                    className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-center cursor-pointer"
+                                >
+                                    {showAdminButtons ? 'Hide Admin Options' : 'Show Admin Options'}
+                                </button>
+                                {showAdminButtons && (
+                                    <>
+                                        <Link href="/admin/wordbooks">
+                                            <div className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-center cursor-pointer">
+                                                Manage Wordbooks
+                                            </div>
+                                        </Link>
+                                        <Link href="/admin/users">
+                                            <div className="mt-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-center cursor-pointer">
+                                                Manage Users
+                                            </div>
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         <button
                             onClick={() => signOut({ callbackUrl: '/' })}
                             className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
