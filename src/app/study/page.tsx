@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
@@ -13,6 +14,7 @@ interface Wordbook {
 export default function StudyPage() {
     const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchWordbooks = async () => {
@@ -24,13 +26,18 @@ export default function StudyPage() {
                 const data = await response.json();
                 setWordbooks(data.wordbooks);
                 setIsLoading(false);
+
+                // 워드북이 하나일 경우 자동으로 해당 워드북 페이지로 이동
+                if (data.wordbooks.length === 1) {
+                    router.push(`/study/${data.wordbooks[0].id}`);
+                }
             } catch (error) {
                 console.error('Error fetching wordbooks:', error);
                 setIsLoading(false);
             }
         };
         fetchWordbooks();
-    }, []);
+    }, [router]);
 
     if (isLoading) return <LoadingSpinner />;
 

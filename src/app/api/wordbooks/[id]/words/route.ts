@@ -17,11 +17,46 @@ export async function GET(
     const userId = authResult.sub;
 
     const { searchParams } = new URL(req.url);
+    const dayParam = searchParams.get('day');
+    const day = dayParam ? parseInt(dayParam) : undefined;
+
+    // 학습 모드: 특정 날짜의 단어를 가져오는 경우
+    if (day !== undefined) {
+        try {
+            const words = await prisma.word.findMany({
+                where: {
+                    wordbookId: params.id,
+                    day: day,
+                },
+                include: {
+                    userProgresses: {
+                        where: { userId },
+                    },
+                },
+                orderBy: { id: 'asc' },
+            });
+
+            const wordsWithProgress = words.map(word => ({
+                id: word.id,
+                english: word.english,
+                korean: word.korean,
+                day: word.day,
+                userProgress: word.userProgresses[0] || null,
+            }));
+
+            return NextResponse.json(wordsWithProgress);
+        } catch (error) {
+            console.error('Failed to fetch words for study:', error);
+            return NextResponse.json({ error: 'Failed to fetch words for study' }, { status: 500 });
+        }
+    }
+
+    // 관리자 모드: 페이지네이션, 검색, 정렬 기능
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
-    const sort = searchParams.get('sort') as 'english' | 'korean' | 'day' || 'day';
-    const order = searchParams.get('order') as 'asc' | 'desc' || 'asc';
+    const sort = (searchParams.get('sort') as 'english' | 'korean' | 'day') || 'day';
+    const order = (searchParams.get('order') as Prisma.SortOrder) || 'asc';
 
     const skip = (page - 1) * limit;
 

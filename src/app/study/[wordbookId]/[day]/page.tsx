@@ -22,20 +22,29 @@ export default function StudyPage() {
     const [words, setWords] = useState<Word[]>([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
     const [studiedWords, setStudiedWords] = useState(0);
+
 
     useEffect(() => {
         const fetchWords = async () => {
+            setIsLoading(true);
+            setIsError(false);
             try {
                 const response = await fetch(`/api/wordbooks/${wordbookId}/words?day=${day}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch words');
                 }
                 const data = await response.json();
-                setWords(data);
-                setIsLoading(false);
+                if (Array.isArray(data) && data.length > 0) {
+                    setWords(data);
+                } else {
+                    setWords([]);
+                }
             } catch (error) {
                 console.error('Error fetching words:', error);
+                setIsError(true);
+            } finally {
                 setIsLoading(false);
             }
         };
@@ -44,6 +53,10 @@ export default function StudyPage() {
     }, [wordbookId, day]);
 
     const handleStatusChange = async (status: WordStatus) => {
+        if (words.length === 0 || currentWordIndex >= words.length) {
+            return;
+        }
+
         try {
             const response = await fetch('/api/progress', {
                 method: 'POST',
@@ -61,15 +74,10 @@ export default function StudyPage() {
                 throw new Error('Failed to save progress');
             }
 
-            // Update local state
-            const updatedWords = [...words];
-            updatedWords[currentWordIndex].userProgress = { status };
-            setWords(updatedWords);
             setStudiedWords(prev => prev + 1);
 
-            // Move to the next word
             if (currentWordIndex < words.length - 1) {
-                setCurrentWordIndex(currentWordIndex + 1);
+                setCurrentWordIndex(prev => prev + 1);
             } else {
                 router.push(`/study/${wordbookId}/${day}/summary?total=${words.length}`);
             }
@@ -89,19 +97,31 @@ export default function StudyPage() {
 
     if (isLoading) return <LoadingSpinner />;
 
+    if (isError) {
+        return <div>Error loading words. Please try again later.</div>;
+    }
+
     if (words.length === 0) {
         return <div>No words found for this day.</div>;
     }
 
+    if (currentWordIndex >= words.length) {
+        return <div>All words for this day have been studied.</div>;
+    }
+
+    const currentWord = words[currentWordIndex];
+
     return (
         <div className="min-h-screen bg-gray-100 py-6 flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold mb-8">Studying Day {day}</h1>
-            <WordCard
-                key={words[currentWordIndex].id}
-                word={words[currentWordIndex].english}
-                meaning={words[currentWordIndex].korean}
-                onStatusChange={handleStatusChange}
-            />
+            {currentWord && (
+                <WordCard
+                    key={currentWord.id}
+                    word={currentWord.english}
+                    meaning={currentWord.korean}
+                    onStatusChange={handleStatusChange}
+                />
+            )}
             <p className="mt-4">
                 Word {currentWordIndex + 1} of {words.length}
             </p>
