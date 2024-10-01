@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { authMiddleware } from '@/middleware/authMiddleware';
+import { Prisma } from '@prisma/client';
 
 export async function GET(
     req: NextRequest,
@@ -16,29 +17,38 @@ export async function GET(
     const userId = authResult.sub;
 
     const { searchParams } = new URL(req.url);
-    const dayParam = searchParams.get('day');
-    const day = dayParam ? parseInt(dayParam) : undefined;
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const search = searchParams.get('search') || '';
+    const sort = searchParams.get('sort') as 'english' | 'korean' | 'day' || 'day';
+    const order = searchParams.get('order') as 'asc' | 'desc' || 'asc';
+
+    const skip = (page - 1) * limit;
 
     try {
-        const words = await prisma.word.findMany({
-            where: {
-                wordbookId: params.id,
-                ...(day !== undefined ? { day } : {}),
-            },
-            include: {
-                userProgresses: {
-                    where: { userId },
-                },
-            },
-            orderBy: { id: 'asc' },
+        const where: Prisma.WordWhereInput = {
+            wordbookId: params.id,
+            OR: [
+                { english: { contains: search, mode: 'insensitive' } },
+                { korean: { contains: search, mode: 'insensitive' } },
+            ],
+        };
+
+        const [words, totalCount] = await Promise.all([
+            prisma.word.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { [sort]: order },
+            }),
+            prisma.word.count({ where }),
+        ]);
+
+        return NextResponse.json({
+            words,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
         });
-
-        const wordsWithProgress = words.map(word => ({
-            ...word,
-            userProgress: word.userProgresses[0] || null,
-        }));
-
-        return NextResponse.json(wordsWithProgress);
     } catch (error) {
         console.error('Failed to fetch words:', error);
         return NextResponse.json({ error: 'Failed to fetch words' }, { status: 500 });

@@ -22,6 +22,10 @@ function CommonList<T extends ListItem>({
     currentPage,
     totalPages
 }: CommonListProps<T>) {
+    if (!items || items.length === 0) {
+        return <p>No items to display.</p>;
+    }
+
     return (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
             <ul className="divide-y divide-gray-200">

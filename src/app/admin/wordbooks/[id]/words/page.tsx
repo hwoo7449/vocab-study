@@ -231,13 +231,17 @@ export default function WordManagementPage({ params }: { params: { id: string } 
             )}
 
             {/* 단어 목록 */}
-            <CommonList
-                items={words}
-                renderItem={renderWord}
-                onPageChange={setCurrentPage}
-                currentPage={currentPage}
-                totalPages={totalPages}
-            />
+            {words.length > 0 ? (
+                <CommonList
+                    items={words}
+                    renderItem={renderWord}
+                    onPageChange={setCurrentPage}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                />
+            ) : (
+                <p>No words found.</p>
+            )}
 
             {/* 단어 추가/편집 모달 */}
             {modalWord && (
