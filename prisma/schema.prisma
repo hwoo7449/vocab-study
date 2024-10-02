@@ -16,6 +16,7 @@ model Wordbook {
   userProgresses UserProgress[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  reports         WordReport[]
 }
 
 model Word {
@@ -29,6 +30,7 @@ model Word {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   reviews Review[]
+  reports         WordReport[]
 
   @@index([wordbookId, day])
 }
@@ -63,6 +65,7 @@ model User {
   updatedAt      DateTime       @updatedAt
   userProgresses UserProgress[]
   reviewSessions ReviewSession[]
+  reports         WordReport[]
 }
 
 model ReviewSession {
@@ -80,4 +83,22 @@ model Review {
   wordId          String
   word            Word          @relation(fields: [wordId], references: [id])
   isCorrect       Boolean
+}
+
+model WordReport {
+  id              String   @id @default(cuid())
+  wordId          String
+  word            Word     @relation(fields: [wordId], references: [id])
+  wordbookId      String
+  wordbook        Wordbook @relation(fields: [wordbookId], references: [id])
+  day             Int
+  originalEnglish String
+  originalKorean  String
+  reportedEnglish String
+  reportedKorean  String
+  status          String   @default("pending") // pending, accepted, rejected
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
 }

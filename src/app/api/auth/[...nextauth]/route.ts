@@ -3,8 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 // NextAuth의 User 타입을 확장
 interface User extends NextAuthUser {

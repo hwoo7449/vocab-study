@@ -277,8 +277,7 @@ export default function ReviewPage() {
                     </div>
                     <WordCard
                         key={words[currentWordIndex].id}
-                        word={words[currentWordIndex].english}
-                        meaning={words[currentWordIndex].korean}
+                        word={words[currentWordIndex]}
                         onStatusChange={handleStatusChange}
                     />
                     <p className="mt-4">

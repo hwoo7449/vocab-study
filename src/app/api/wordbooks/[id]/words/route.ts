@@ -41,6 +41,7 @@ export async function GET(
                 english: word.english,
                 korean: word.korean,
                 day: word.day,
+                wordbookId: word.wordbookId,  // 여기에 wordbookId 추가
                 userProgress: word.userProgresses[0] || null,
             }));
 

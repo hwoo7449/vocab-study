@@ -1,5 +1,4 @@
 // src/app/admin/layout.tsx
-
 'use client';
 
 import Link from 'next/link';
@@ -33,6 +32,9 @@ export default function AdminLayout({
                     </Link>
                     <Link href="/admin/users" className="block py-2 px-4 text-gray-600 hover:bg-gray-200">
                         Users
+                    </Link>
+                    <Link href="/admin/reported-words" className="block py-2 px-4 text-gray-600 hover:bg-gray-200">
+                        Reported Words
                     </Link>
                     {/* 추가 관리자 메뉴 항목들 */}
                 </nav>

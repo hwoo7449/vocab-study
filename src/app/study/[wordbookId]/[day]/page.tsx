@@ -10,6 +10,8 @@ interface Word {
     id: string;
     english: string;
     korean: string;
+    day: number;
+    wordbookId: string;
     userProgress?: {
         status: string;
     };
@@ -36,6 +38,7 @@ export default function StudyPage() {
                     throw new Error('Failed to fetch words');
                 }
                 const data = await response.json();
+                console.log('Fetched words:', data); // 여기에 콘솔 로그 추가
                 if (Array.isArray(data) && data.length > 0) {
                     setWords(data);
                 } else {
@@ -117,8 +120,7 @@ export default function StudyPage() {
             {currentWord && (
                 <WordCard
                     key={currentWord.id}
-                    word={currentWord.english}
-                    meaning={currentWord.korean}
+                    word={currentWord}
                     onStatusChange={handleStatusChange}
                 />
             )}
