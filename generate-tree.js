@@ -27,5 +27,5 @@ function generateTree(dir, prefix = '') {
 const rootDir = process.cwd();
 const tree = generateTree(rootDir);
 
-fs.writeFileSync('FOLDER_STRUCTURE.md', tree);
-console.log('Folder structure has been saved to FOLDER_STRUCTURE.md');
+fs.writeFileSync('폴더 구조.md', tree);
+console.log('Folder structure has been saved to 폴더 구조.md');
