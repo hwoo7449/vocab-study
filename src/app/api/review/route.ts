@@ -12,32 +12,27 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const wordbookId = searchParams.get('wordbookId');
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const days = searchParams.get('days');
+
+    if (!wordbookId) {
+        return NextResponse.json({ error: 'Wordbook ID is required' }, { status: 400 });
+    }
 
     try {
         let whereClause: any = {
             userId: userId,
+            wordbookId: wordbookId,
             nextReviewDate: {
                 lte: new Date(),
             },
         };
 
-        if (wordbookId) {
-            whereClause.wordbookId = wordbookId;
-        }
-
-        if (startDate) {
-            whereClause.lastReviewDate = {
-                ...whereClause.lastReviewDate,
-                gte: new Date(startDate),
-            };
-        }
-
-        if (endDate) {
-            whereClause.lastReviewDate = {
-                ...whereClause.lastReviewDate,
-                lte: new Date(endDate),
+        if (days) {
+            const daysList = days.split(',').map(Number);
+            whereClause.word = {
+                day: {
+                    in: daysList
+                }
             };
         }
 
@@ -52,7 +47,6 @@ export async function GET(req: NextRequest) {
             orderBy: {
                 nextReviewDate: 'asc',
             },
-            take: 20,
         });
 
         const words = wordsToReview.map(progress => ({
@@ -61,9 +55,10 @@ export async function GET(req: NextRequest) {
             korean: progress.word.korean,
             wordbookName: progress.wordbook.name,
             wordbookId: progress.wordbook.id,
+            day: progress.word.day, // day 정보 추가
             userProgress: {
-                status: progress.status,
-            },
+                status: progress.status
+            }
         }));
 
         return NextResponse.json(words);
